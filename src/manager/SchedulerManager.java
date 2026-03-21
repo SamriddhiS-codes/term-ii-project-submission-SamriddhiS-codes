@@ -20,25 +20,25 @@ public class SchedulerManager {
         this.tasks = new PriorityQueue<>(Comparator.comparingInt(strategy::calculatePriority).reversed());
     }
 
-    // Observer methods
     public void addObserver(TaskObserver observer) { observers.add(observer); }
     public void removeObserver(TaskObserver observer) { observers.remove(observer); }
 
-    // Task methods
     public void addTask(Task task) {
         tasks.add(task);
         observers.forEach(o -> o.onTaskAdded(task));
     }
 
     public void updateTask(Task task) {
-        tasks.remove(task);
+        tasks.remove(task);   // Remove and reinsert to update priority
         tasks.add(task);
         observers.forEach(o -> o.onTaskUpdated(task));
     }
 
     public void completeTask(Task task) {
-        tasks.remove(task);
-        observers.forEach(o -> o.onTaskCompleted(task));
+        if (tasks.remove(task)) {
+            task.setStatus(Task.Status.COMPLETED);  // Update status
+            observers.forEach(o -> o.onTaskCompleted(task));
+        }
     }
 
     public Task getNextTask() {
