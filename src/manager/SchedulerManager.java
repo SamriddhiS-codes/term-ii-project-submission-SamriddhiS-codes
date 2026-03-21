@@ -45,7 +45,6 @@ public class SchedulerManager {
         return tasks.peek();
     }
 
-    // Dynamic strategy switching
     public void switchStrategy(SchedulingStrategy newStrategy) {
         this.strategy = newStrategy;
         List<Task> temp = new ArrayList<>(tasks);
