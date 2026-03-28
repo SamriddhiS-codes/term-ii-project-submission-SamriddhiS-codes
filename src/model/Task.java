@@ -1,8 +1,11 @@
 package model;
 
 import java.time.LocalDate;
+import java.io.Serializable;
 
-public abstract class Task {
+public abstract class Task implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     public enum Status {
         PENDING,
