@@ -6,6 +6,7 @@ import observer.ConsoleObserver;
 import strategy.DeadlineStrategy;
 import strategy.FixedPriorityStrategy;
 import model.Task;
+import persistence.TaskPersistence;
 
 import java.time.LocalDate;
 import java.util.Scanner;
@@ -15,6 +16,7 @@ public class Main {
     public static void main(String[] args) {
         SchedulerManager manager = new SchedulerManager(new FixedPriorityStrategy());
         manager.addObserver(new ConsoleObserver());
+        TaskPersistence.loadTasks().forEach(manager::addTask);
 
         Scanner sc = new Scanner(System.in);
         boolean running = true;
@@ -29,7 +31,7 @@ public class Main {
             System.out.print("Enter choice: ");
 
             int choice = sc.nextInt();
-            sc.nextLine();  // consume newline
+            sc.nextLine();
 
             switch (choice) {
                 case 1:
@@ -39,24 +41,33 @@ public class Main {
                     String title = sc.nextLine();
 
                     Task task = null;
+
                     if (type.equalsIgnoreCase("Work")) {
                         System.out.print("Project name: ");
                         String project = sc.nextLine();
                         task = new WorkTask(title, project);
+
                     } else if (type.equalsIgnoreCase("Personal")) {
                         System.out.print("Category: ");
                         String category = sc.nextLine();
                         task = new PersonalTask(title, category);
+
                         System.out.print("Deadline (YYYY-MM-DD, optional, press Enter to skip): ");
                         String date = sc.nextLine();
+
                         if (!date.isEmpty()) {
-                            task.setDeadline(LocalDate.parse(date));
+                            task.setDeadline(LocalDate.parse(date)); // (we'll handle invalid input later)
                         }
+
                     } else if (type.equalsIgnoreCase("Urgent")) {
                         task = new UrgentTask(title);
                     }
 
-                    if (task != null) manager.addTask(task);
+                    if (task != null) {
+                        manager.addTask(task);
+                    } else {
+                        System.out.println("Invalid task type!");
+                    }
                     break;
 
                 case 2:
@@ -64,29 +75,44 @@ public class Main {
                     for (Task t : manager.getAllTasks()) {
                         System.out.println(t.getTitle() + " | Status: " + t.getStatus() +
                                 " | Deadline: " + t.getDeadline() +
-                                " | Priority: " + manager.getNextTask().calculatePriority());
+                                " | Priority: " + t.calculatePriority());
                     }
                     break;
 
                 case 3:
                     System.out.print("Enter task title to complete: ");
                     String completeTitle = sc.nextLine();
+
                     Task toComplete = manager.getAllTasks().stream()
                             .filter(t -> t.getTitle().equalsIgnoreCase(completeTitle))
-                            .findFirst().orElse(null);
-                    if (toComplete != null) manager.completeTask(toComplete);
-                    else System.out.println("Task not found.");
+                            .findFirst()
+                            .orElse(null);
+
+                    if (toComplete != null) {
+                        manager.completeTask(toComplete);
+                    } else {
+                        System.out.println("Task not found.");
+                    }
                     break;
 
                 case 4:
                     System.out.print("Choose strategy (Fixed/Deadline): ");
                     String strat = sc.nextLine();
-                    if (strat.equalsIgnoreCase("Fixed")) manager.switchStrategy(new FixedPriorityStrategy());
-                    else if (strat.equalsIgnoreCase("Deadline")) manager.switchStrategy(new DeadlineStrategy());
+
+                    if (strat.equalsIgnoreCase("Fixed")) {
+                        manager.switchStrategy(new FixedPriorityStrategy());
+                    } else if (strat.equalsIgnoreCase("Deadline")) {
+                        manager.switchStrategy(new DeadlineStrategy());
+                    } else {
+                        System.out.println("Invalid strategy!");
+                        break;
+                    }
+
                     System.out.println("Strategy switched to " + strat);
                     break;
 
                 case 5:
+                    TaskPersistence.saveTasks(manager.getAllTasks());
                     running = false;
                     break;
 
