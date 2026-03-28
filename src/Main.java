@@ -30,7 +30,15 @@ public class Main {
             System.out.println("5. Exit");
             System.out.print("Enter choice: ");
 
-            int choice = sc.nextInt();
+            int choice;
+
+            try {
+                choice = sc.nextInt();
+            } catch (Exception e) {
+                System.out.println("Invalid input! Please enter a number.");
+                sc.nextLine();
+                continue;
+            }
             sc.nextLine();
 
             switch (choice) {
@@ -39,6 +47,10 @@ public class Main {
                     String type = sc.nextLine();
                     System.out.print("Title: ");
                     String title = sc.nextLine();
+                    if (title.trim().isEmpty()) {
+                        System.out.println("Title cannot be empty!");
+                        break;
+                    }
 
                     Task task = null;
 
@@ -56,7 +68,11 @@ public class Main {
                         String date = sc.nextLine();
 
                         if (!date.isEmpty()) {
-                            task.setDeadline(LocalDate.parse(date)); // (we'll handle invalid input later)
+                            try {
+                                task.setDeadline(LocalDate.parse(date));
+                            } catch (Exception e) {
+                                System.out.println("Invalid date format! Deadline not set.");
+                            }
                         }
 
                     } else if (type.equalsIgnoreCase("Urgent")) {
